@@ -1,0 +1,24 @@
+{
+    "name": "com.ybwork.orca",
+    "version": "0.1.0",
+    "displayName": "ybwork.ORCA",
+    "description": "RVO2算法",
+    "unity": "2022.3",
+    "documentationUrl": "https://nebukam.github.io/docs/unity/com.nebukam.common/",
+    "keywords": [],
+    "category": "",
+    "author": {
+        "name": "月北是个程序员",
+        "url": "https://github.com/ybwork-cn/ybwork.ORCA.git"
+    },
+    "contributors": [
+        {
+            "name": "Timothe Lapetite",
+            "email": "nebukam@gmail.com",
+            "url": "https://github.com/Nebukam/com.nebukam.orca.git"
+        }
+    ],
+    "dependencies": {
+        "com.unity.collections": "2.2.1"
+    }
+}

@@ -1,0 +1,20 @@
+{
+    "name": "Nebukam.Common",
+    "rootNamespace": "",
+    "references": [
+        "Nebukam.Common.Editor",
+        "Unity.Mathematics",
+        "Unity.Burst",
+        "Nebukam.JobAssist",
+        "Unity.Collections"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
