@@ -57,7 +57,7 @@ namespace Nebukam.ORCA
             int count = _agents == null ? 0 : _agents.Count;
 
             m_lockedAgents.Clear();
-            m_lockedAgents.Capacity = count;
+            m_lockedAgents.Capacity = math.ceilpow2(count);
 
             for (int i = 0; i < count; i++)
             {
