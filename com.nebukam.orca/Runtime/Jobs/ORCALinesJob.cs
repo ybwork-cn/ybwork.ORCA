@@ -499,14 +499,11 @@ namespace Nebukam.ORCA
                 for (int i = treeNode.begin; i < treeNode.end; ++i)
                 {
                     AgentData a = m_inputAgents[i];
-                    var layerFlag1 = agent.layerFlag & (ORCALayer.L0 | ORCALayer.L1);
-                    var layerFlag2 = a.layerFlag & (ORCALayer.L0 | ORCALayer.L1);
 
                     if (a.index == agent.index
                         || !a.collisionEnabled
-                        || (a.layerOccupation & ~agent.layerIgnore) == 0
-                        // 不同阵营的单位不发生碰撞
-                        || layerFlag1 != layerFlag2)
+                        // 不同碰撞层的单位不发生碰撞
+                        || ((agent.layerOccupation & ~a.layerIgnore) & a.layerOccupation) == ORCALayer.NONE)
                     {
                         continue;
                     }

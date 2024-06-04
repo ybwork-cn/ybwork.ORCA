@@ -1,6 +1,6 @@
 {
     "name": "com.ybwork.orca",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "displayName": "ybwork.ORCA",
     "description": "RVO2算法",
     "unity": "2022.3",
