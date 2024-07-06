@@ -71,24 +71,23 @@ namespace Nebukam.ORCA
 
             MakeLength(ref _outputAgents, agentCount);
 
+            System.Span<AgentData> outputAgents = _outputAgents.AsSpan();
+
             _maxRadius = 0f;
 
             for (int i = 0; i < agentCount; i++)
             {
                 Agent a = m_lockedAgents[i];
                 _maxRadius = max(_maxRadius, a.radius);
-                float2 pos = a.pos;
-                float2 prefVel = a.m_prefVelocity;
-                float2 vel = a.m_velocity;
-                _outputAgents[i] = new AgentData()
+                outputAgents[i] = new AgentData()
                 {
                     index = i,
                     kdIndex = i,
-                    position = float2(pos.x, pos.y), //
-                    worldPosition = pos,
-                    prefVelocity = float2(prefVel.x, prefVel.y),
-                    velocity = float2(vel.x, vel.y),
-                    worldVelocity = vel,
+                    position = a.pos,
+                    worldPosition = a.pos,
+                    prefVelocity = a.m_prefVelocity,
+                    velocity = a.m_velocity,
+                    worldVelocity = a.m_velocity,
                     radius = a.m_radius,
                     radiusObst = a.m_radiusObst,
                     maxSpeed = a.m_maxSpeed,
