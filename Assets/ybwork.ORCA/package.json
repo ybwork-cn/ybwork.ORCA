@@ -11,6 +11,13 @@
         "name": "月北是个程序员",
         "url": "https://github.com/ybwork-cn/ybwork.ORCA.git"
     },
+    "samples": [
+        {
+            "displayName": "ybwork.ORCA.Sample",
+            "description": "示例",
+            "path": "Samples~/ybwork.ORCA.Sample"
+        }
+    ],
     "contributors": [
         {
             "name": "Timothe Lapetite",
