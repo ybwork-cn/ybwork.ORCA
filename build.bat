@@ -4,7 +4,7 @@ SET ToolName=upm
 SET ToolAssetPath=Assets/ybwork.ORCA
 
 git branch -D %ToolName%
-git remote rm %ToolName%
+git push --delete origin %ToolName%
 ::此命令会创建一个ToolName的分支，并同步ToolAssetPath下的内容
 git subtree split -P %ToolAssetPath% --branch %ToolName%
 
