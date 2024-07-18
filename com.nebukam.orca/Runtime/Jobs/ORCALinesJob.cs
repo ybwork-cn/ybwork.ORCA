@@ -391,12 +391,9 @@ namespace Nebukam.ORCA
                 float2 relVel = a_velocity - otherAgent.velocity;
                 float distSq = lengthsq(relPos);
                 float cRad = a_radius + otherAgent.radius;
-                //异种单位碰撞时，双方碰撞半径都按照原来的0.1倍算
-                if (agent.layerFlag != otherAgent.layerFlag)
-                    cRad *= 0.1f;
                 float cRadSq = lengthsq(cRad);
 
-                ORCALine line = new ORCALine();
+                ORCALine line = new();
                 float2 u;
 
                 if (distSq > cRadSq)
