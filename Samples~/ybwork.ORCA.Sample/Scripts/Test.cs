@@ -1,6 +1,8 @@
 ﻿using Nebukam.ORCA;
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Mathematics;
+using Nebukam.Common;
 
 public class Test : MonoBehaviour
 {
@@ -17,29 +19,47 @@ public class Test : MonoBehaviour
     {
         _parent = new GameObject("Units").transform;
         _orca = new();
+        _orca.staticObstacles.Add(new List<float2> {
+            new(20,40),
+            new(20,20),
+            new(40,20),
+            new(40,40),
+        }, isReverse: false, maxSegmentLength: 6);
         _random = new Unity.Mathematics.Random(12345);
     }
 
-    private void FixedUpdate()
+    int center;
+    private void Update()
     {
+        center = Input.GetKey(KeyCode.Space) ? 0 : 30;
         _orca.Complete();
 
-        for (int i = 0; i < _count; i++)
-            Create();
-
+        if (_agents.Count < 6000)
+        {
+            for (int i = 0; i < _count; i++)
+                Create();
+        }
         foreach (var item in _agents)
         {
             float x = item.pos.x;
             float y = item.pos.y;
             item.Transform.position = new Vector3(x, 0, y);
+            item.prefVelocity = math.normalize(new float2(center) - item.pos) * item.maxSpeed;
         }
 
-        _orca.Schedule(Time.fixedDeltaTime);
+        _orca.Schedule(Time.deltaTime);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Draw.Square(new float3(30, 0, 30), 20, Color.green);
     }
 
     private void Create()
     {
-        var agent = _orca.agents.Add(_random.NextFix64Vec2() * _radius);
+        var agent = _orca.agents.Add(30 + _random.NextFloat2() * _radius);
+        agent.maxSpeed = 10;
+        agent.prefVelocity = math.normalize(new float2(1)) * agent.maxSpeed;
         GameObject go = Instantiate(_prefabe, _parent);
         agent.Transform = go.transform;
         _agents.Add(agent);

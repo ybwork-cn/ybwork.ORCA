@@ -103,7 +103,6 @@ namespace Nebukam.ORCA
 
             if (m_staticObstacleTree.Length > 0)
             {
-
                 NativeList<DVP> staticObstacleNeighbors = new NativeList<DVP>(10, Allocator.Temp);
 
                 QueryObstacleTreeRecursive(
@@ -118,7 +117,6 @@ namespace Nebukam.ORCA
 
                 for (int i = 0; i < staticObstacleNeighbors.Length; ++i)
                 {
-
                     ObstacleVertexData vertex = m_staticObstacles[staticObstacleNeighbors[i].index];
                     ObstacleVertexData nextVertex = m_staticRefObstacles[vertex.next];
                     ObstacleInfos infos = m_staticObstacleInfos[vertex.infos];
@@ -144,225 +142,45 @@ namespace Nebukam.ORCA
                         }
                     }
 
-
                     if (alreadyCovered)
-                    {
                         continue;
-                    }
 
-                    // Not yet covered. Check for collisions.
-                    float distSq1 = lengthsq(relPos1);
-                    float distSq2 = lengthsq(relPos2);
-
-                    float radiusSq = lengthsq(oRadius);
-
-                    float2 obstacleVector = nextVertex.pos - vertex.pos;
-                    float s = lengthsq(obstacleVector / dot(-relPos1, obstacleVector));
-                    float distSqLine = lengthsq(-relPos1 - (s * obstacleVector));
-
+                    float r = a_radius + a_radiusObst;
                     ORCALine line;
 
-                    if (s < 0.0f && distSq1 <= radiusSq)
-                    {
-                        // Collision with left vertex. Ignore if non-convex.
-                        if (vertex.convex)
-                        {
-                            line.point = float2(0f);
-                            line.dir = normalize(float2(-relPos1.y, relPos1.x));
-                            m_orcaLines.Add(line);
-                        }
+                    // 当前线段法线方向
+                    float2 obstacleNormal = new float2(vertex.dir.y, -vertex.dir.x);
 
-                        continue;
-                    }
-                    else if (s > 1.0f && distSq2 <= radiusSq)
+                    if (DistSqPointLineSegment(vertex.pos, nextVertex.pos, a_position) < r)
                     {
-                        // Collision with right vertex. Ignore if non-convex or if
-                        // it will be taken care of by neighboring obstacle.
-                        if (nextVertex.convex && Det(relPos2, nextVertex.dir) >= 0.0f)
-                        {
-                            line.point = float2(0f);
-                            line.dir = normalize(float2(-relPos2.y, relPos2.x));
-                            m_orcaLines.Add(line);
-                        }
-
-                        continue;
-                    }
-                    else if (s >= 0.0f && s < 1.0f && distSqLine <= radiusSq)
-                    {
-                        // Collision with obstacle segment.
-                        line.point = float2(0f);
+                        line.point = relPos1 + obstacleNormal * r;
                         line.dir = -vertex.dir;
                         m_orcaLines.Add(line);
-
                         continue;
                     }
 
-                    // No collision. Compute legs. When obliquely viewed, both legs
-                    // can come from a single vertex. Legs extend cut-off line when
-                    // non-convex vertex.
-
-                    float2 lLegDir, rLegDir;
-
-                    if (s < 0.0f && distSqLine <= radiusSq)
+                    if (vertex.convex)
                     {
-                        // Obstacle viewed obliquely so that left vertex
-                        // defines velocity obstacle.
-                        if (!vertex.convex)
+                        // 移速方向在原点和障碍物线段两端组成的夹角之外
+                        var cos1 = dot(normalize(a_velocity), normalize(relPos1));
+                        var cos2 = dot(normalize(a_velocity), normalize(relPos2));
+                        var cosRange = dot(normalize(relPos1), normalize(relPos2));
+                        if (cos1 < cosRange || cos2 < cosRange)
                         {
-                            // Ignore obstacle.
-                            continue;
-                        }
-
-                        nextVertex = vertex;
-
-                        float leg1 = sqrt(distSq1 - radiusSq);
-                        lLegDir = float2(relPos1.x * leg1 - relPos1.y * oRadius, relPos1.x * oRadius + relPos1.y * leg1) / distSq1;
-                        rLegDir = float2(relPos1.x * leg1 + relPos1.y * oRadius, -relPos1.x * oRadius + relPos1.y * leg1) / distSq1;
-                    }
-                    else if (s > 1.0f && distSqLine <= radiusSq)
-                    {
-                        // Obstacle viewed obliquely so that
-                        // right vertex defines velocity obstacle.
-                        if (!nextVertex.convex)
-                        {
-                            // Ignore obstacle.
-                            continue;
-                        }
-
-                        vertex = nextVertex;
-
-                        float leg2 = sqrt(distSq2 - radiusSq);
-                        lLegDir = float2(relPos2.x * leg2 - relPos2.y * oRadius, relPos2.x * oRadius + relPos2.y * leg2) / distSq2;
-                        rLegDir = float2(relPos2.x * leg2 + relPos2.y * oRadius, -relPos2.x * oRadius + relPos2.y * leg2) / distSq2;
-                    }
-                    else
-                    {
-                        // Usual situation.
-                        if (vertex.convex)
-                        {
-                            float leg1 = sqrt(distSq1 - radiusSq);
-                            lLegDir = float2(relPos1.x * leg1 - relPos1.y * oRadius, relPos1.x * oRadius + relPos1.y * leg1) / distSq1;
-                        }
-                        else
-                        {
-                            // Left vertex non-convex; left leg extends cut-off line.
-                            lLegDir = -vertex.dir;
-                        }
-
-                        if (nextVertex.convex)
-                        {
-                            float leg2 = sqrt(distSq2 - radiusSq);
-                            rLegDir = float2(relPos2.x * leg2 + relPos2.y * oRadius, -relPos2.x * oRadius + relPos2.y * leg2) / distSq2;
-                        }
-                        else
-                        {
-                            // Right vertex non-convex; right leg extends cut-off line.
-                            rLegDir = vertex.dir;
+                            // 移速方向在原点和(障碍物线段扩展半径之后的形状最外侧)组成的夹角之外
+                            if (lengthsq(cos1) * lengthsq(relPos1) < lengthsq(relPos1) - lengthsq(r))
+                                continue;
+                            if (lengthsq(cos2) * lengthsq(relPos2) < lengthsq(relPos2) - lengthsq(r))
+                                continue;
                         }
                     }
 
-                    // Legs can never point into neighboring edge when convex
-                    // vertex, take cutoff-line of neighboring edge instead. If
-                    // velocity projected on "foreign" leg, no constraint is added.
-
-                    ObstacleVertexData leftNeighbor = m_staticRefObstacles[vertex.prev];
-
-                    bool isLeftLegForeign = false;
-                    bool isRightLegForeign = false;
-
-                    if (vertex.convex && Det(lLegDir, -leftNeighbor.dir) >= 0.0f)
-                    {
-                        // Left leg points into obstacle.
-                        lLegDir = -leftNeighbor.dir;
-                        isLeftLegForeign = true;
-                    }
-
-                    if (nextVertex.convex && Det(rLegDir, nextVertex.dir) <= 0.0f)
-                    {
-                        // Right leg points into obstacle.
-                        rLegDir = nextVertex.dir;
-                        isRightLegForeign = true;
-                    }
-
-                    // Compute cut-off centers.
-                    float2 leftCutOff = invTimeHorizonObst * (vertex.pos - a_position);
-                    float2 rightCutOff = invTimeHorizonObst * (nextVertex.pos - a_position);
-                    float2 cutOffVector = rightCutOff - leftCutOff;
-
-                    // Project current velocity on velocity obstacle.
-
-                    // Check if current velocity is projected on cutoff circles.
-                    float t = vertex.index == nextVertex.index ? 0.5f : dot((a_velocity - leftCutOff), cutOffVector) / lengthsq(cutOffVector);
-                    float tLeft = dot((a_velocity - leftCutOff), lLegDir);
-                    float tRight = dot((a_velocity - rightCutOff), rLegDir);
-
-                    if ((t < 0.0f && tLeft < 0.0f) || (vertex.index == nextVertex.index && tLeft < 0.0f && tRight < 0.0f))
-                    {
-                        // Project on left cut-off circle.
-                        float2 unitW = normalize(a_velocity - leftCutOff);
-
-                        line.dir = float2(unitW.y, -unitW.x);
-                        line.point = leftCutOff + oRadius * invTimeHorizonObst * unitW;
-                        m_orcaLines.Add(line);
-
-                        continue;
-                    }
-                    else if (t > 1.0f && tRight < 0.0f)
-                    {
-                        // Project on right cut-off circle.
-                        float2 unitW = normalize(a_velocity - rightCutOff);
-
-                        line.dir = float2(unitW.y, -unitW.x);
-                        line.point = rightCutOff + oRadius * invTimeHorizonObst * unitW;
-                        m_orcaLines.Add(line);
-
-                        continue;
-                    }
-
-                    // Project on left leg, right leg, or cut-off line, whichever is
-                    // closest to velocity.
-                    float distSqCutoff = (t < 0.0f || t > 1.0f || vertex.index == nextVertex.index) ? float.PositiveInfinity : lengthsq(a_velocity - (leftCutOff + t * cutOffVector));
-                    float distSqLeft = tLeft < 0.0f ? float.PositiveInfinity : lengthsq(a_velocity - (leftCutOff + tLeft * lLegDir));
-                    float distSqRight = tRight < 0.0f ? float.PositiveInfinity : lengthsq(a_velocity - (rightCutOff + tRight * rLegDir));
-
-                    if (distSqCutoff <= distSqLeft && distSqCutoff <= distSqRight)
-                    {
-                        // Project on cut-off line.
-                        line.dir = -vertex.dir;
-                        line.point = leftCutOff + oRadius * invTimeHorizonObst * float2(-line.dir.y, line.dir.x);
-                        m_orcaLines.Add(line);
-
-                        continue;
-                    }
-
-                    if (distSqLeft <= distSqRight)
-                    {
-                        // Project on left leg.
-                        if (isLeftLegForeign)
-                        {
-                            continue;
-                        }
-
-                        line.dir = lLegDir;
-                        line.point = leftCutOff + oRadius * invTimeHorizonObst * float2(-line.dir.y, line.dir.x);
-                        m_orcaLines.Add(line);
-
-                        continue;
-                    }
-
-                    // Project on right leg.
-                    if (isRightLegForeign)
-                    {
-                        continue;
-                    }
-
-                    line.dir = -rLegDir;
-                    line.point = rightCutOff + oRadius * invTimeHorizonObst * float2(-line.dir.y, line.dir.x);
+                    line.point = relPos1 + obstacleNormal * r;
+                    line.dir = -vertex.dir;
                     m_orcaLines.Add(line);
                 }
 
                 staticObstacleNeighbors.Release();
-
             }
 
             #endregion
@@ -466,8 +284,6 @@ namespace Nebukam.ORCA
 
             #endregion
 
-            //if (dot(a_newVelocity, a_prefVelocity) < 0 && length(a_newVelocity) > 0.5f)
-            //    a_newVelocity = float2(0);
             result.velocity = a_newVelocity;
             result.position = a_position + a_newVelocity * m_timestep;
 
@@ -605,20 +421,16 @@ namespace Nebukam.ORCA
 
                     if (distSq < rangeSq)
                     {
-
                         float agentLeftOfLine = LeftOf(o.pos, next.pos, center);
                         float distSqLine = lengthsq(agentLeftOfLine) / lengthsq(next.pos - o.pos);
 
                         if (distSqLine < rangeSq)
                         {
-
-
                             if (agentLeftOfLine < 0.0f)
                             {
                                 // Try obstacle at this node only if agent is on right side of
                                 // obstacle (and can see obstacle).
                                 obstacleNeighbors.Add(new DVP(distSq, i));
-
 
                                 int index = obstacleNeighbors.Length - 1;
 
@@ -630,18 +442,13 @@ namespace Nebukam.ORCA
                                 }
 
                                 obstacleNeighbors[index] = new DVP(distSq, i);
-
-
                             }
-
                         }
                     }
                 }
-
             }
             else
             {
-
                 ObstacleTreeNode leftNode = kdTree[treeNode.left],
                     rightNode = kdTree[treeNode.right];
 
@@ -682,9 +489,7 @@ namespace Nebukam.ORCA
                         }
                     }
                 }
-
             }
-
         }
 
         #endregion
@@ -950,6 +755,7 @@ namespace Nebukam.ORCA
 
         /// <summary>
         /// Computes the squared distance from a line segment with the specified endpoints to a specified point.
+        /// 点到线段的最近距离
         /// </summary>
         /// <param name="a">The first endpoint of the line segment.</param>
         /// <param name="b">The second endpoint of the line segment.</param>
@@ -958,26 +764,26 @@ namespace Nebukam.ORCA
         private static float DistSqPointLineSegment(float2 a, float2 b, float2 c)
         {
             // inline operations instead of calling shorthands
-            float2 ca = float2(c.x - a.x, c.y - a.y);
-            float2 ba = float2(b.x - a.x, b.y - a.y);
-            float dot = ca.x * ba.x + ca.y * ba.y;
+            float2 ca = c - a;
+            float2 ba = b - a;
+            float dot_ca_ba = ca.x * ba.x + ca.y * ba.y;
 
-            float r = dot / (ba.x * ba.x + ba.y * ba.y);
+            // ac在ab投影长度除以ab长度
+            float r = dot_ca_ba / dot(ba, ba);
 
             if (r < 0.0f)
             {
-                return ca.x * ca.x + ca.y * ca.y;
+                return dot(ca, ca);
             }
 
             if (r > 1.0f)
             {
-                float2 cb = float2(c.x - b.x, c.y - b.y);
-                return cb.x * cb.x + cb.y * cb.y;
+                float2 cb = c - b;
+                return dot(cb, cb);
             }
 
-            float2 d = float2(c.x - (a.x + r * ba.x), c.y - (a.y + r * ba.y));
-            return d.x * d.x + d.y * d.y;
-
+            float2 d = c - (a + r * ba);
+            return dot(d, d);
         }
 
         #endregion

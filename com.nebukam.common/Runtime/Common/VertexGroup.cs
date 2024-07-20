@@ -74,14 +74,11 @@ namespace Nebukam.Common
     {
         protected Pool.OnItemReleased _onVertexReleasedCached;
 
-        public bool locked { get; } = false;
+        public List<V> vertices = new List<V>();
 
-        protected List<V> _vertices = new List<V>();
-        public List<V> vertices { get { return _vertices; } }
+        public int Count => vertices.Count;
 
-        public int Count { get { return _vertices.Count; } }
-
-        public V this[int index] { get { return _vertices[index]; } }
+        public V this[int index] { get { return vertices[index]; } }
 
         public VertexGroup()
         {
@@ -110,10 +107,10 @@ namespace Nebukam.Common
             if (v is not V vert)
                 throw new System.Exception("Wrong vertex type");
 
-            if (_vertices.Contains(vert))
+            if (vertices.Contains(vert))
                 return vert;
 
-            _vertices.Add(vert);
+            vertices.Add(vert);
             OnVertexAdded(vert);
             return vert;
         }
@@ -145,23 +142,23 @@ namespace Nebukam.Common
 
             V vert = v;
 
-            int currentIndex = _vertices.IndexOf(v);
+            int currentIndex = vertices.IndexOf(v);
             if (currentIndex == index)
                 return vert;
 
             if (currentIndex != -1)
             {
-                _vertices.RemoveAt(currentIndex);
+                vertices.RemoveAt(currentIndex);
 
                 if (currentIndex < index)
-                    _vertices.Insert(index - 1, vert);
+                    vertices.Insert(index - 1, vert);
                 else
-                    _vertices.Insert(index, vert);
+                    vertices.Insert(index, vert);
             }
             else
             {
                 //Add vertex
-                _vertices.Insert(index, vert);
+                vertices.Insert(index, vert);
                 OnVertexAdded(vert);
             }
 
@@ -179,7 +176,7 @@ namespace Nebukam.Common
             V vert = Pool.Rent<V>();
             vert.pos = v;
 
-            _vertices.Insert(index, vert);
+            vertices.Insert(index, vert);
             OnVertexAdded(vert);
             return vert;
         }
@@ -196,7 +193,7 @@ namespace Nebukam.Common
         /// <returns></returns>
         public V Remove(V v, bool release = false)
         {
-            int index = _vertices.IndexOf(v);
+            int index = vertices.IndexOf(v);
             return RemoveAt(index);
         }
 
@@ -208,8 +205,8 @@ namespace Nebukam.Common
         /// <returns></returns>
         public V RemoveAt(int index, bool release = false)
         {
-            V result = _vertices[index];
-            _vertices.RemoveAt(index);
+            V result = vertices[index];
+            vertices.RemoveAt(index);
             OnVertexRemoved(result);
             if (release) { result.Release(); }
             return result;
@@ -243,7 +240,7 @@ namespace Nebukam.Common
         /// </summary>
         public void Reverse()
         {
-            _vertices.Reverse();
+            vertices.Reverse();
         }
 
         /// <summary>
@@ -252,7 +249,7 @@ namespace Nebukam.Common
         /// <returns></returns>
         public V Shift(bool release = false)
         {
-            int count = _vertices.Count;
+            int count = vertices.Count;
             if (count == 0) { return null; }
             return RemoveAt(0, release);
         }
@@ -263,7 +260,7 @@ namespace Nebukam.Common
         /// <returns></returns>
         public V Pop(bool release = false)
         {
-            int count = _vertices.Count;
+            int count = vertices.Count;
             if (count == 0) { return null; }
             return RemoveAt(count - 1, release);
         }
@@ -273,11 +270,11 @@ namespace Nebukam.Common
         /// </summary>
         public virtual void Clear(bool release = false)
         {
-            int count = _vertices.Count;
+            int count = vertices.Count;
             while (count != 0)
             {
                 RemoveAt(count - 1, release);
-                count = _vertices.Count;
+                count = vertices.Count;
             }
         }
 
@@ -287,8 +284,8 @@ namespace Nebukam.Common
         /// <param name="offset"></param>
         public void Offset(float2 offset)
         {
-            for (int i = 0, count = _vertices.Count; i < count; i++)
-                _vertices[i].pos += offset;
+            for (int i = 0, count = vertices.Count; i < count; i++)
+                vertices[i].pos += offset;
         }
 
         #endregion

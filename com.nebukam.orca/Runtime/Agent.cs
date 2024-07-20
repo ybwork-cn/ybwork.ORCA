@@ -24,84 +24,6 @@ using Nebukam.Common;
 
 namespace Nebukam.ORCA
 {
-    public interface IAgent : IVertex
-    {
-        float2 targetPos { get; set; }
-        /// <summary>
-        /// Preferred velocity of the agent.
-        /// This is the 'ideal', desired velocity.
-        /// Note : The agent velocity is multiplied by the simulation's timestep.
-        /// </summary>
-        float2 prefVelocity { get; set; }
-        /// <summary>
-        /// Simulated, collision-free velocity.
-        /// </summary>
-        float2 velocity { get; set; }
-
-        /// <summary>
-        /// Height of the agent.
-        /// </summary>
-        float height { get; set; }
-        /// <summary>
-        /// Radius of the agent when resolving agent-agent collisions.
-        /// </summary>
-        float radius { get; set; }
-        /// <summary>
-        /// Radius of the agent when resolving agent-obstacle collisions.
-        /// </summary>
-        float radiusObst { get; set; }
-        /// <summary>
-        /// Maximum allowed speed of the agent.
-        /// This is used to avoid deadlock situation where a slight
-        /// boost in velocity could help solve more complex scenarios.
-        /// </summary>
-        float maxSpeed { get; set; }
-
-        /// <summary>
-        /// Maxmimum number of neighbors this agent accounts for in the simulation
-        /// </summary>
-        int maxNeighbors { get; set; }
-        /// <summary>
-        /// Maximum distance at which this agent consider avoiding other agents
-        /// </summary>
-        float neighborDist { get; set; }
-
-        /// <summary>
-        /// Used to modulate distance checks toward other agents within the simulation.
-        /// Picture this property as an 'anticipation' capability toward other agents.
-        /// The impact of that value on the simulation is highly dependent on the surrounding of an agent.
-        /// Should be > 0f
-        /// </summary>
-        float timeHorizon { get; set; }
-        /// <summary>
-        /// Used to modulate distance checks toward Obstacles within the simulation.
-        /// Picture this property as an 'anticipation' capability toward other obstacles.
-        /// The impact of that value on the simulation is highly dependent on the surroundings of an agent.
-        /// Should be > 0f
-        /// </summary>
-        float timeHorizonObst { get; set; }
-
-        /// <summary>
-        /// Layers on which this agent is physically present, and thus will affect
-        /// other agents navigation.
-        /// </summary>
-        ORCALayer layerOccupation { get; set; }
-        /// <summary>
-        /// Ignored layers while resolving the simulation.
-        /// </summary>
-        ORCALayer layerIgnore { get; set; }
-        /// <summary>
-        /// Whether this agent's navigation is controlled by the simulation.
-        /// This property has precedence over layers.
-        /// </summary>
-        bool navigationEnabled { get; set; }
-        /// <summary>
-        /// Whether this agent's collision is enabled.
-        /// This property has precedence over layers.
-        /// </summary>
-        bool collisionEnabled { get; set; }
-    }
-
     public class Agent : Vertex
     {
         /// 
@@ -112,7 +34,7 @@ namespace Nebukam.ORCA
         protected internal float2 m_prefVelocity = float2(0);
         protected internal float2 m_velocity = float2(0);
 
-        protected internal float m_radius = 0.5f;
+        public float radius = 0.5f;
         protected internal float m_radiusObst = 0f;
         protected internal float m_maxSpeed = 20.0f;
 
@@ -158,14 +80,6 @@ namespace Nebukam.ORCA
             set { m_velocity = value; }
         }
 
-        /// <summary>
-        /// Radius of the agent when resolving agent-agent collisions.
-        /// </summary>
-        public float radius
-        {
-            get { return m_radius; }
-            set { m_radius = value; }
-        }
         /// <summary>
         /// Radius of the agent when resolving agent-obstacle collisions.
         /// </summary>

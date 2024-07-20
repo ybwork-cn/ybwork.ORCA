@@ -48,9 +48,9 @@ namespace Nebukam.ORCA
             //Compute whether a vertex is convex or concave
             //as well as its direction
             ObstacleVertexData v = m_inputObstacles[index];
-            float2 pos = v.pos,
-                nextPos = m_inputObstacles[v.next].pos,
-                prevPos = m_inputObstacles[v.prev].pos;
+            float2 pos = v.pos;
+            float2 nextPos = m_inputObstacles[v.next].pos;
+            float2 prevPos = m_inputObstacles[v.prev].pos;
 
             ObstacleInfos infos = m_inputObstacleInfos[v.infos];
 

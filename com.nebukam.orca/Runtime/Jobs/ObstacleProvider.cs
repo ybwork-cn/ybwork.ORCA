@@ -127,7 +127,7 @@ namespace Nebukam.ORCA
                         {
                             infos = i,
                             index = index,
-                            pos = new float2(o[v].pos.x, o[v].pos.y),
+                            pos = o[v].pos,
                             prev = v == 0 ? lastIndex : index - 1,
                             next = v == vCountMinusOne ? firstIndex : index + 1
                         };
