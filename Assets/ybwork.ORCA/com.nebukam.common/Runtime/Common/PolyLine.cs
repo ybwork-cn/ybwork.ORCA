@@ -33,18 +33,16 @@ namespace Nebukam.Common
         /// <param name="subSegmentLength"></param>
         public void Subdivide(float subSegmentLength)
         {
-
 #if UNITY_EDITOR
             if (subSegmentLength <= 0.0f) { throw new System.Exception("Subdivide(float) : parameter subSegmentLength must be > 0.0f"); }
 #endif
 
-
-            int count = _vertices.Count - 1, insertIndex = 0;
+            int count = vertices.Count - 1, insertIndex = 0;
 
             for (int i = 0; i < count; i++)
             {
-
-                float2 v = _vertices[insertIndex].pos, v_next = _vertices[insertIndex + 1].pos;
+                float2 v = vertices[insertIndex].pos;
+                float2 v_next = vertices[insertIndex + 1].pos;
                 float dist = math.distance(v, v_next), subDist = dist / subSegmentLength;
 
                 insertIndex++;
@@ -61,9 +59,7 @@ namespace Nebukam.Common
                     Insert(insertIndex, v + dir * (j * subSegmentLength));
                     insertIndex++;
                 }
-
             }
-
         }
 
         #endregion

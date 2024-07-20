@@ -19,32 +19,24 @@
 // SOFTWARE.
 
 using Nebukam.JobAssist;
-using System.Collections.Generic;
 using Unity.Collections;
-using Unity.Mathematics;
 using static Nebukam.JobAssist.Extensions;
-using static Unity.Mathematics.math;
 
 namespace Nebukam.ORCA
 {
     public interface IAgentProvider<TAgent> : IProcessor where TAgent : Agent
     {
         NativeArray<AgentData> outputAgents { get; }
-        List<TAgent> lockedAgents { get; }
+        TAgent[] lockedAgents { get; }
         float maxRadius { get; }
     }
 
     public class AgentProvider<TAgent> : Processor<Unemployed>, IAgentProvider<TAgent> where TAgent : Agent, new()
     {
-        protected AgentGroup<TAgent> _agents = null;
-        public AgentGroup<TAgent> agents
-        {
-            get { return _agents; }
-            set { _agents = value; }
-        }
+        public AgentGroup<TAgent> agents = null;
 
-        internal List<TAgent> m_lockedAgents = new List<TAgent>();
-        public List<TAgent> lockedAgents { get { return m_lockedAgents; } }
+        internal TAgent[] m_lockedAgents = null;
+        public TAgent[] lockedAgents { get { return m_lockedAgents; } }
 
         protected NativeArray<AgentData> _outputAgents = default;
         public NativeArray<AgentData> outputAgents { get { return _outputAgents; } }
@@ -54,20 +46,18 @@ namespace Nebukam.ORCA
 
         protected override void InternalLock()
         {
-            int count = _agents == null ? 0 : _agents.Count;
+            int count = agents == null ? 0 : agents.Count;
 
-            m_lockedAgents.Clear();
-            m_lockedAgents.Capacity = math.ceilpow2(count);
-
+            m_lockedAgents = new TAgent[count];
             for (int i = 0; i < count; i++)
             {
-                m_lockedAgents.Add(_agents[i]);
+                m_lockedAgents[i] = agents[i];
             }
         }
 
         protected override void Prepare(ref Unemployed job, float delta)
         {
-            int agentCount = m_lockedAgents.Count;
+            int agentCount = m_lockedAgents.Length;
 
             MakeLength(ref _outputAgents, agentCount);
 
@@ -78,7 +68,8 @@ namespace Nebukam.ORCA
             for (int i = 0; i < agentCount; i++)
             {
                 Agent a = m_lockedAgents[i];
-                _maxRadius = max(_maxRadius, a.radius);
+                if (_maxRadius < a.radius)
+                    _maxRadius = a.radius;
                 outputAgents[i] = new AgentData()
                 {
                     index = i,
@@ -88,7 +79,7 @@ namespace Nebukam.ORCA
                     prefVelocity = a.m_prefVelocity,
                     velocity = a.m_velocity,
                     worldVelocity = a.m_velocity,
-                    radius = a.m_radius,
+                    radius = a.radius,
                     radiusObst = a.m_radiusObst,
                     maxSpeed = a.m_maxSpeed,
                     maxNeighbors = a.m_maxNeighbors,
@@ -107,9 +98,8 @@ namespace Nebukam.ORCA
 
         protected override void InternalDispose()
         {
-            _agents = null;
+            agents = null;
 
-            m_lockedAgents.Clear();
             m_lockedAgents = null;
 
             _outputAgents.Release();

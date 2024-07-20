@@ -19,9 +19,7 @@
 // SOFTWARE.
 
 using Nebukam.JobAssist;
-using System.Collections.Generic;
-using Unity.Collections;
-using Unity.Mathematics;
+using System;
 
 namespace Nebukam.ORCA
 {
@@ -62,8 +60,8 @@ namespace Nebukam.ORCA
         protected override void Apply(ref ORCAApplyJob job)
         {
             IAgentProvider<TAgent> agentProvider = _orcaResultProvider.agentProvider;
-            NativeArray<AgentData> agentDataList = agentProvider.outputAgents;
-            List<TAgent> agentList = agentProvider.lockedAgents;
+            ReadOnlySpan<AgentData> agentDataList = agentProvider.outputAgents.AsReadOnlySpan();
+            TAgent[] agentList = agentProvider.lockedAgents;
 
             for (int i = 0, count = agentDataList.Length; i < count; i++)
             {
@@ -71,7 +69,6 @@ namespace Nebukam.ORCA
                 Agent agent = agentList[agentData.index];
                 agent.pos = agentData.worldPosition;
                 agent.velocity = agentData.worldVelocity;
-                //if(math.length(agent.velocity)> agent.maxSpeed)
             }
         }
     }

@@ -37,5 +37,4 @@ namespace Nebukam.ORCA
         public float2 pos;
         public float2 dir;
     }
-
 }

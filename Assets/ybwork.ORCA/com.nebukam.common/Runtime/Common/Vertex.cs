@@ -22,13 +22,8 @@ using Unity.Mathematics;
 
 namespace Nebukam.Common
 {
-    public interface IVertex : IPoolItem
+    public class Vertex : PoolItem
     {
-        float2 pos { get; set; }
-    }
-
-    public class Vertex : PoolItem, IVertex
-    {
-        public float2 pos { get; set; }
+        public float2 pos;
     }
 }
