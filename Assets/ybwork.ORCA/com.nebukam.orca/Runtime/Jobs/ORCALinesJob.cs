@@ -64,6 +64,15 @@ namespace Nebukam.ORCA
         [ReadOnly]
         public NativeArray<ObstacleTreeNode> m_staticObstacleTree;
 
+        [ReadOnly]
+        public NativeArray<ObstacleInfos> m_dynObstacleInfos;
+        [ReadOnly]
+        public NativeArray<ObstacleVertexData> m_dynRefObstacles;
+        [ReadOnly]
+        public NativeArray<ObstacleVertexData> m_dynObstacles;
+        [ReadOnly]
+        public NativeArray<ObstacleTreeNode> m_dynObstacleTree;
+
         public NativeArray<AgentDataResult> m_results;
         public float m_timestep;
 
@@ -181,6 +190,92 @@ namespace Nebukam.ORCA
                 }
 
                 staticObstacleNeighbors.Release();
+            }
+
+            #endregion
+
+            #region dynamic obstacles
+
+            if (m_dynObstacleTree.Length > 0)
+            {
+                NativeList<DVP> dynObstacleNeighbors = new NativeList<DVP>(10, Allocator.Temp);
+
+                QueryObstacleTreeRecursive(
+                    ref a_position,
+                    ref agent,
+                    ref obsRangeSq, 0,
+                    ref dynObstacleNeighbors,
+                    ref m_dynObstacles,
+                    ref m_dynRefObstacles,
+                    ref m_dynObstacleInfos,
+                    ref m_dynObstacleTree);
+
+                for (int i = 0; i < dynObstacleNeighbors.Length; ++i)
+                {
+                    ObstacleVertexData vertex = m_dynObstacles[dynObstacleNeighbors[i].index];
+                    ObstacleVertexData nextVertex = m_dynRefObstacles[vertex.next];
+                    ObstacleInfos infos = m_dynObstacleInfos[vertex.infos];
+
+                    //if(a_top < infos.baseline || a_bottom > infos.baseline + infos.height) { continue; }
+
+                    float2 relPos1 = vertex.pos - a_position;
+                    float2 relPos2 = nextVertex.pos - a_position;
+
+                    float oRadius = a_radiusObst + infos.thickness;
+
+                    // Check if velocity obstacle of obstacle is already taken care
+                    // of by previously constructed obstacle ORCA lines.
+                    bool alreadyCovered = false;
+
+                    for (int j = 0; j < m_orcaLines.Length; ++j)
+                    {
+                        if (Det(invTimeHorizonObst * relPos1 - m_orcaLines[j].point, m_orcaLines[j].dir) - invTimeHorizonObst * oRadius
+                            >= -EPSILON && Det(invTimeHorizonObst * relPos2 - m_orcaLines[j].point, m_orcaLines[j].dir) - invTimeHorizonObst * oRadius >= -EPSILON)
+                        {
+                            alreadyCovered = true;
+                            break;
+                        }
+                    }
+
+                    if (alreadyCovered)
+                        continue;
+
+                    float r = a_radius + a_radiusObst;
+                    ORCALine line;
+
+                    // 当前线段法线方向
+                    float2 obstacleNormal = new float2(vertex.dir.y, -vertex.dir.x);
+
+                    if (DistSqPointLineSegment(vertex.pos, nextVertex.pos, a_position) < r)
+                    {
+                        line.point = relPos1 + obstacleNormal * r;
+                        line.dir = -vertex.dir;
+                        m_orcaLines.Add(line);
+                        continue;
+                    }
+
+                    if (vertex.convex)
+                    {
+                        // 移速方向在原点和障碍物线段两端组成的夹角之外
+                        var cos1 = dot(normalize(a_velocity), normalize(relPos1));
+                        var cos2 = dot(normalize(a_velocity), normalize(relPos2));
+                        var cosRange = dot(normalize(relPos1), normalize(relPos2));
+                        if (cos1 < cosRange || cos2 < cosRange)
+                        {
+                            // 移速方向在原点和(障碍物线段扩展半径之后的形状最外侧)组成的夹角之外
+                            if (lengthsq(cos1) * lengthsq(relPos1) < lengthsq(relPos1) - lengthsq(r))
+                                continue;
+                            if (lengthsq(cos2) * lengthsq(relPos2) < lengthsq(relPos2) - lengthsq(r))
+                                continue;
+                        }
+                    }
+
+                    line.point = relPos1 + obstacleNormal * r;
+                    line.dir = -vertex.dir;
+                    m_orcaLines.Add(line);
+                }
+
+                dynObstacleNeighbors.Release();
             }
 
             #endregion

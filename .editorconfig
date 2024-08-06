@@ -1,0 +1,29 @@
+# 如果要从更高级别的目录继承 .editorconfig 设置，请删除以下行
+root = true
+
+# c# 文件
+[*.cs]
+
+# IDE1006: 命名样式
+dotnet_diagnostic.IDE1006.severity = silent
+
+# IDE0017: 简化对象初始化
+dotnet_diagnostic.IDE0017.severity = silent
+
+# IDE0028: 简化集合初始化
+dotnet_diagnostic.IDE0028.severity = silent
+
+# IDE0031: 使用 null 传播
+dotnet_diagnostic.IDE0031.severity = warning
+
+# IDE0044: 添加只读修饰符
+dotnet_diagnostic.IDE0044.severity = warning
+
+# IDE0090: 使用 "new(...)"
+dotnet_diagnostic.IDE0090.severity = silent
+
+# IDE0220: 添加显式转换
+dotnet_diagnostic.IDE0220.severity = warning
+
+# UNT0008: Null propagation on Unity objects
+dotnet_diagnostic.UNT0008.severity = warning

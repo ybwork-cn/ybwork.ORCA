@@ -56,9 +56,8 @@ namespace Nebukam.ORCA
     public class ObstacleKDTree<T> : Processor<ObstacleKDTreeJob>, IObstacleKDTreeProvider
         where T : class, IProcessor, IObstacleProvider
     {
-
         protected NativeArray<ObstacleTreeNode> _outputTree = default;
-        public NativeArray<ObstacleTreeNode> outputTree { get { return _outputTree; } }
+        public NativeArray<ObstacleTreeNode> outputTree => _outputTree;
 
         #region Inputs
 
@@ -70,17 +69,14 @@ namespace Nebukam.ORCA
 
         protected override void Prepare(ref ObstacleKDTreeJob job, float delta)
         {
-
             if (_inputsDirty)
             {
-
                 if (!TryGetFirstInCompound(out _obstaclesProvider))
                 {
                     throw new System.Exception("IObstacleProvider missing.");
                 }
 
                 _inputsDirty = false;
-
             }
 
             if (_obstaclesProvider.recompute)
@@ -100,18 +96,14 @@ namespace Nebukam.ORCA
             job.m_referenceObstacles = _obstaclesProvider.referenceObstacles;
             job.m_inputObstacles = _obstaclesProvider.outputObstacles;
             job.m_outputTree = _outputTree;
-
-
         }
 
         protected override void InternalDispose()
         {
             _outputTree.Release();
         }
-
     }
 
     public class DynObstacleKDTreeProcessor : ObstacleKDTree<IDynObstacleProvider>, IDynObstacleKDTreeProvider { }
     public class StaticObstacleKDTreeProcessor : ObstacleKDTree<IStaticObstacleProvider>, IStaticObstacleKDTreeProvider { }
-
 }

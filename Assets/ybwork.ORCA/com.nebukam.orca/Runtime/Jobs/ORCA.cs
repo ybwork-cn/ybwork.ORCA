@@ -26,9 +26,11 @@ namespace Nebukam.ORCA
     {
         // Preparation
         protected ObstacleKDTreeBuilder<IStaticObstacleProvider, StaticObstacleProvider, StaticObstacleKDTreeProcessor> _staticObstacles;
+        protected ObstacleKDTreeBuilder<IDynObstacleProvider, DynObstacleProvider, DynObstacleKDTreeProcessor> _dynObstacles;
         protected AgentKDTreeBuilder<TAgent> _agents;
 
         public ObstacleGroup staticObstacles => _staticObstacles.obstacles;
+        public ObstacleGroup dynObstacles => _dynObstacles.obstacles;
         public AgentGroup<TAgent> agents => _agents.agents;
 
         protected ORCALines<TAgent> _orcaLines;
@@ -39,6 +41,8 @@ namespace Nebukam.ORCA
             // Preparation
             Add(ref _staticObstacles);
             _staticObstacles.obstacles = new ObstacleGroup();
+            Add(ref _dynObstacles);
+            _dynObstacles.obstacles = new ObstacleGroup();
             Add(ref _agents);
             _agents.agents = new AgentGroup<TAgent>();
 

@@ -25,13 +25,11 @@ using Unity.Mathematics;
 using static Unity.Mathematics.math;
 
 //[NativeDisableParallelForRestriction]
-
 namespace Nebukam.ORCA
 {
     [BurstCompile]
     public struct ObstacleOrientationJob : IJobParallelFor
     {
-
         public bool m_recompute;
 
         [ReadOnly]

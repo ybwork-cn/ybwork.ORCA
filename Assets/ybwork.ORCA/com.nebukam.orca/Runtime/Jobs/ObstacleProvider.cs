@@ -25,7 +25,6 @@ using Unity.Mathematics;
 
 namespace Nebukam.ORCA
 {
-
     public interface IObstacleProvider : IProcessor
     {
         ObstacleGroup obstacles { get; set; }
@@ -44,46 +43,43 @@ namespace Nebukam.ORCA
         /// 
         /// Fields
         ///
-
-        protected bool _recompute = true;
         protected ObstacleGroup _obstacles = null;
         protected NativeArray<ObstacleInfos> _outputObstacleInfos = default;
         protected NativeArray<ObstacleVertexData> _referenceObstacles = default;
         protected NativeArray<ObstacleVertexData> _outputObstacles = default;
 
-
         /// 
         /// Properties
         ///
-
-        public bool recompute { get { return _recompute; } set { _recompute = true; } }
+        public bool recompute { get; protected set; }
         public ObstacleGroup obstacles
         {
-            get { return _obstacles; }
-            set { _obstacles = value; _recompute = true; }
+            get => _obstacles;
+            set
+            {
+                _obstacles = value;
+                recompute = true;
+            }
         }
-        public NativeArray<ObstacleInfos> outputObstacleInfos { get { return _outputObstacleInfos; } }
-        public NativeArray<ObstacleVertexData> referenceObstacles { get { return _referenceObstacles; } }
-        public NativeArray<ObstacleVertexData> outputObstacles { get { return _outputObstacles; } }
+        public NativeArray<ObstacleInfos> outputObstacleInfos => _outputObstacleInfos;
+        public NativeArray<ObstacleVertexData> referenceObstacles => _referenceObstacles;
+        public NativeArray<ObstacleVertexData> outputObstacles => _outputObstacles;
 
         protected override void InternalLock() { }
 
         protected override void Prepare(ref Unemployed job, float delta)
         {
-            int obsCount = _obstacles == null ? 0 : _obstacles.Count,
-             refCount = _referenceObstacles.Length, vCount = 0;
+            int obsCount = _obstacles == null ? 0 : _obstacles.Count;
+            int vCount = 0;
 
-            _recompute = !MakeLength(ref _outputObstacleInfos, obsCount);
-
-            Obstacle o;
-            ObstacleInfos infos;
+            recompute = !MakeLength(ref _outputObstacleInfos, obsCount) | recompute;
 
             for (int i = 0; i < obsCount; i++)
             {
-                o = _obstacles[i];
+                Obstacle o = _obstacles[i];
                 //Keep collision infos & ORCALayer up-to-date
                 //there is no need to recompute anything else.
-                infos = o.infos;
+                ObstacleInfos infos = o.infos;
                 infos.index = i;
                 infos.start = vCount;
                 _outputObstacleInfos[i] = infos;
@@ -91,39 +87,31 @@ namespace Nebukam.ORCA
                 vCount += infos.length;
             }
 
-            if (!_recompute)
-            {
-                if (refCount != vCount)
-                {
-                    _recompute = true;
-                }
-                else
-                {
-                    return;
-                }
-            }
+            recompute |= _referenceObstacles.Length != vCount;
+
+            if (!recompute)
+                return;
 
             MakeLength(ref _referenceObstacles, vCount);
             MakeLength(ref _outputObstacles, vCount);
 
-            ObstacleVertexData oData;
-            int gIndex = 0, index = 0, vCountMinusOne, firstIndex, lastIndex;
+            int gIndex = 0, index = 0;
 
             for (int i = 0; i < obsCount; i++)
             {
-                o = _obstacles[i];
+                Obstacle o = _obstacles[i];
 
                 vCount = o.Count;
-                vCountMinusOne = vCount - 1;
-                firstIndex = gIndex;
-                lastIndex = gIndex + vCountMinusOne;
+                int vCountMinusOne = vCount - 1;
+                int firstIndex = gIndex;
+                int lastIndex = gIndex + vCountMinusOne;
 
                 if (!o.edge)
                 {
                     //Obstacle is a closed polygon
                     for (int v = 0; v < vCount; v++)
                     {
-                        oData = new ObstacleVertexData()
+                        _referenceObstacles[index] = new ObstacleVertexData()
                         {
                             infos = i,
                             index = index,
@@ -131,7 +119,7 @@ namespace Nebukam.ORCA
                             prev = v == 0 ? lastIndex : index - 1,
                             next = v == vCountMinusOne ? firstIndex : index + 1
                         };
-                        _referenceObstacles[index++] = oData;
+                        index++;
                     }
                 }
                 else
@@ -139,7 +127,7 @@ namespace Nebukam.ORCA
                     //Obstacle is an open path
                     for (int v = 0; v < vCount; v++)
                     {
-                        oData = new ObstacleVertexData()
+                        _referenceObstacles[index] = new ObstacleVertexData()
                         {
                             infos = i,
                             index = index,
@@ -147,9 +135,8 @@ namespace Nebukam.ORCA
                             prev = v == 0 ? index : index - 1,
                             next = v == vCountMinusOne ? index : index + 1
                         };
-                        _referenceObstacles[index++] = oData;
+                        index++;
                     }
-
                 }
 
                 gIndex += vCount;
@@ -160,7 +147,7 @@ namespace Nebukam.ORCA
 
         protected override void Apply(ref Unemployed job)
         {
-            _recompute = false;
+            recompute = false;
         }
 
         protected override void InternalDispose()
@@ -170,18 +157,18 @@ namespace Nebukam.ORCA
             _referenceObstacles.Release();
             _outputObstacles.Release();
         }
-
     }
 
-    public class StaticObstacleProvider : ObstacleProvider, IStaticObstacleProvider { }
+    public class StaticObstacleProvider : ObstacleProvider, IStaticObstacleProvider
+    {
+    }
+
     public class DynObstacleProvider : ObstacleProvider, IDynObstacleProvider
     {
         protected override void Prepare(ref Unemployed job, float delta)
         {
-            _recompute = true; //force always recompute 
+            recompute = true; //force always recompute 
             base.Prepare(ref job, delta);
         }
     }
-
-
 }
