@@ -19,11 +19,9 @@
 // SOFTWARE.
 
 using Nebukam.JobAssist;
-using Nebukam.Common;
 
 namespace Nebukam.ORCA
 {
-
     public class ObstacleKDTreeBuilder<T, P, KD> : ProcessorChain
         where T : class, IProcessor, IObstacleProvider
         where P : class, T, new()
@@ -49,7 +47,5 @@ namespace Nebukam.ORCA
             Add(ref _fix);
             Add(ref _kdTree); //Compute & split actual KDTree
         }
-
     }
-
 }

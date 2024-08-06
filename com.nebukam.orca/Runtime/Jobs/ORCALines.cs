@@ -43,14 +43,12 @@ namespace Nebukam.ORCA
         public IAgentProvider<TAgent> agentProvider { get { return _agentProvider; } }
 
         protected IAgentKDTreeProvider _agentKDTreeProvider;
-        public IAgentKDTreeProvider agentKDTreeProvider { get { return _agentKDTreeProvider; } }
 
         protected IStaticObstacleProvider _staticObstaclesProvider;
-        public IStaticObstacleProvider staticObstaclesProvider { get { return _staticObstaclesProvider; } }
-
         protected IStaticObstacleKDTreeProvider _staticObstacleKDTreeProvider;
-        public IStaticObstacleKDTreeProvider staticObstacleKDTreeProvider { get { return _staticObstacleKDTreeProvider; } }
 
+        protected IDynObstacleProvider _dynObstaclesProvider;
+        protected IDynObstacleKDTreeProvider _dynObstacleKDTreeProvider;
         #endregion
 
         protected override int Prepare(ref ORCALinesJob job, float delta)
@@ -60,13 +58,17 @@ namespace Nebukam.ORCA
                 if (!TryGetFirstInCompound(out _agentProvider, true)
                     || !TryGetFirstInCompound(out _agentKDTreeProvider, true)
                     || !TryGetFirstInCompound(out _staticObstaclesProvider, true)
-                    || !TryGetFirstInCompound(out _staticObstacleKDTreeProvider, true))
+                    || !TryGetFirstInCompound(out _staticObstacleKDTreeProvider, true)
+                    || !TryGetFirstInCompound(out _dynObstaclesProvider, true)
+                    || !TryGetFirstInCompound(out _dynObstacleKDTreeProvider, true))
                 {
-                    string msg = string.Format("Missing provider : Agents = {0}, Static obs = {1}, Agent KD = {2}, Static obs KD= {3}, group = {4}",
+                    string msg = string.Format("Missing provider : Agents = {0}, Agent KD = {1}, Static obs = {2}, Static obs KD= {3}, Dynamic obs = {4}, Dynamic obs KD= {5}, group = {6}",
                         _agentProvider,
-                        _staticObstaclesProvider,
                         _agentKDTreeProvider,
+                        _staticObstaclesProvider,
                         _staticObstacleKDTreeProvider,
+                        _dynObstaclesProvider,
+                        _dynObstacleKDTreeProvider,
                         _compound);
 
                     throw new System.Exception(msg);
@@ -88,6 +90,12 @@ namespace Nebukam.ORCA
             job.m_staticRefObstacles = _staticObstaclesProvider.referenceObstacles;
             job.m_staticObstacles = _staticObstaclesProvider.outputObstacles;
             job.m_staticObstacleTree = _staticObstacleKDTreeProvider.outputTree;
+
+            //Static dynamic data
+            job.m_dynObstacleInfos = _dynObstaclesProvider.outputObstacleInfos;
+            job.m_dynRefObstacles = _dynObstaclesProvider.referenceObstacles;
+            job.m_dynObstacles = _dynObstaclesProvider.outputObstacles;
+            job.m_dynObstacleTree = _dynObstacleKDTreeProvider.outputTree;
 
             job.m_results = _results;
             job.m_timestep = delta;
